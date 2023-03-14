@@ -41,7 +41,7 @@ public final class Mapping {
 
     public Mapping withValueSearchParameter(String valueSearchParameter) {
         return new Mapping(key, resourceType, termCodeSearchParameter,
-                new ValueFilterMapping(FilterType.CODING, valueSearchParameter),
+                new ValueFilterMapping(FilterType.CODING, valueSearchParameter, key),
                 fixedCriteria, attributeMappings, timeRestrictionPath);
     }
 
@@ -72,7 +72,7 @@ public final class Mapping {
                 valueSearchParameter == null
                         ? null
                         : new ValueFilterMapping(valueTypeFhir == null ? FilterType.CODING : valueTypeFhir,
-                        valueSearchParameter),
+                        valueSearchParameter, key),
                 fixedCriteria == null ? List.of() : List.copyOf(fixedCriteria),
                 (attributeMappings == null ? Map.of() : attributeMappings.stream()
                         .collect(Collectors.toMap(AttributeMapping::key, Function.identity()))),
@@ -104,11 +104,16 @@ public final class Mapping {
         return mapping == null ? Mono.error(new AttributeMappingNotFoundException(key, code)) : Mono.just(mapping);
     }
 
-    private record ValueFilterMapping(FilterType type, String searchParameter) implements FilterMapping {
+    private record ValueFilterMapping(FilterType type, String searchParameter, TermCode key) implements FilterMapping {
 
         private ValueFilterMapping {
             requireNonNull(type);
             requireNonNull(searchParameter);
+        }
+
+        @Override
+        public boolean isAge(){
+            return key == null ? false : key.code().equals("424144002") && key.system().equals("http://snomed.info/sct");
         }
     }
 }

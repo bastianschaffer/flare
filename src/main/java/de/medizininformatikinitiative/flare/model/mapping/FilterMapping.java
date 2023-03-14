@@ -5,4 +5,6 @@ public interface FilterMapping {
     FilterType type();
 
     String searchParameter();
+
+    boolean isAge();
 }

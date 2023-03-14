@@ -5,6 +5,7 @@ import de.medizininformatikinitiative.flare.model.sq.Comparator;
 import de.medizininformatikinitiative.flare.model.sq.TermCode;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 public record ExpandedComparatorFilter(String searchParameter, Comparator comparator, BigDecimal value, TermCode unit)
         implements ExpandedFilter {

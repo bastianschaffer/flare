@@ -1,6 +1,7 @@
 package de.medizininformatikinitiative.flare.model.sq;
 
 import de.medizininformatikinitiative.flare.model.mapping.FilterMapping;
+import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedBirthdateComparatorFilter;
 import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedComparatorFilter;
 import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedFilter;
 import reactor.core.publisher.Mono;
@@ -49,6 +50,11 @@ public record ComparatorFilterPart(Comparator comparator, BigDecimal value, Term
                 LocalDate minDate = timeValueToDate(age.add(BigDecimal.ONE)).plusDays(1);
                 LocalDate maxDate = timeValueToDate(age);
 
+                return Mono.just(List.of(new ExpandedBirthdateComparatorFilter(Comparator.GREATER_THAN, minDate, unit),
+                                         new ExpandedBirthdateComparatorFilter(Comparator.LESS_THAN, maxDate, unit)));
+                //TODO handle other types that comparator.equals(Comparator.EQUAL)
+            }else{
+                return Mono.just(List.of(new ExpandedBirthdateComparatorFilter(comparator,timeValueToDate(value), unit )));
             }
         }
         return Mono.just(List.of(new ExpandedComparatorFilter(filterMapping.searchParameter(), comparator, value, unit)));

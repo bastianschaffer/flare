@@ -4,6 +4,7 @@ import de.medizininformatikinitiative.flare.model.sq.Comparator;
 import de.medizininformatikinitiative.flare.model.sq.TermCode;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -69,6 +70,20 @@ public record QueryParams(List<Param> params) {
     public QueryParams appendParam(String name, Comparator comparator, BigDecimal value, TermCode unit) {
         String unitAttachment = unit == null ? "" :  "|" + unit.system() + "|" + unit.code();
         return appendParam(name, comparator.toString() + value + unitAttachment);
+    }
+
+    /**
+     * Appends a param with {@code name} and a date value that the resources should be compared with in the end.
+     *
+     * @param name       the name of the query parameter
+     * @param comparator the {@link Comparator} to use as prefix
+     * @param value      the date that should be compared
+     * @param unit       the unit of the {@code value}
+     * @return the {@code QueryParams} resulting in appending the param
+     */
+    public QueryParams appendParam(String name, Comparator comparator, LocalDate value, TermCode unit) {
+        return appendParam(name, comparator.toString() + value.toString() + "|" + unit.system() + "|" + unit.code());
+        //TODO maybe make function for unit attachment as it is used twice
     }
 
     /**

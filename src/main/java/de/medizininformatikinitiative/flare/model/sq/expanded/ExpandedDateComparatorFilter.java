@@ -6,9 +6,12 @@ import de.medizininformatikinitiative.flare.model.sq.TermCode;
 
 import java.time.LocalDate;
 
-public record ExpandedBirthdateComparatorFilter(Comparator comparator, LocalDate birthdate, TermCode unit) implements  ExpandedFilter{
+public record ExpandedDateComparatorFilter(String searchParameter, Comparator comparator, LocalDate birthdate,
+                                           TermCode unit)
+        implements ExpandedFilter {
+
     @Override
     public QueryParams toParams() {
-        return QueryParams.EMPTY.appendParam("birthdate", comparator, birthdate, unit);
+        return QueryParams.EMPTY.appendParam(searchParameter, comparator, birthdate, unit);
     }
 }

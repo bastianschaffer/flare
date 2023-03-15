@@ -1,13 +1,10 @@
 package de.medizininformatikinitiative.flare.model.sq;
 
 import de.medizininformatikinitiative.flare.model.mapping.FilterMapping;
-import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedBirthdateComparatorFilter;
-import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedComparatorFilter;
-import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedFilter;
+import de.medizininformatikinitiative.flare.model.sq.expanded.*;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -44,34 +41,13 @@ public record ComparatorFilterPart(Comparator comparator, BigDecimal value, Term
 
     @Override
     public Mono<List<ExpandedFilter>> expand(FilterMapping filterMapping) {
-        if(filterMapping.isAge()){
-            if(comparator.equals(Comparator.EQUAL)){
-                BigDecimal age = value;
-                LocalDate minDate = timeValueToDate(age.add(BigDecimal.ONE)).plusDays(1);
-                LocalDate maxDate = timeValueToDate(age);
-
-                return Mono.just(List.of(new ExpandedBirthdateComparatorFilter(Comparator.GREATER_THAN, minDate, unit),
-                                         new ExpandedBirthdateComparatorFilter(Comparator.LESS_THAN, maxDate, unit)));
-                //TODO handle other types that comparator.equals(Comparator.EQUAL)
-            }else{
-                return Mono.just(List.of(new ExpandedBirthdateComparatorFilter(comparator,timeValueToDate(value), unit )));
-            }
+        if (filterMapping.isAge()) {
+            return comparator.equals(Comparator.EQUAL) ? Mono.just(List.of(new ExpandedDateRangeFilter(
+                    AgeUtils.searchParam, AgeUtils.equalCaseLowerDate(value, unit),
+                    AgeUtils.equalCaseLowerDate(value, unit), unit))) :
+                    Mono.just(List.of(new ExpandedDateComparatorFilter(AgeUtils.searchParam, comparator,
+                                                                       AgeUtils.ageValueToDate(value, unit), unit)));
         }
         return Mono.just(List.of(new ExpandedComparatorFilter(filterMapping.searchParameter(), comparator, value, unit)));
-    }
-
-    private LocalDate timeValueToDate(BigDecimal timeValue)  {
-        int filterValue = timeValue.intValue();
-        //LocalDate date = LocalDate.now(clock);//TODO implement clock for testing here
-        LocalDate now = LocalDate.now();
-        return switch (unit.code()) {
-            case "a" -> now.minusYears(filterValue);
-            case "mo" -> now.minusMonths(filterValue);
-            case "wk" -> now.minusWeeks(filterValue);
-            case "d", "h", "min" -> now;
-                    //throw new Exception("d, h, and min as unit of time not implemented");
-            default -> now;
-        };//TODO: make better exception here
-        //TODO: make default
     }
 }

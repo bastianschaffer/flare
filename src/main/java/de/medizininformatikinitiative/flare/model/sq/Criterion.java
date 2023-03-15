@@ -78,7 +78,7 @@ public record Criterion(Concept concept, List<Filter> filters, TimeRestriction t
 
     private Mono<List<ExpandedCriterion>> expandTermCode(MappingContext mappingContext, TermCode termCode) {
         return mappingContext.findMapping(termCode)
-                .flatMap(mapping -> (mapping)
+                .flatMap(mapping -> expandFilters(mapping)
                         .map(Util::cartesianProduct)
                         .map(expandedFilterMatrix -> expandedFilterMatrix.isEmpty()
                                 ? List.of(expandedCriterion(mapping, termCode))

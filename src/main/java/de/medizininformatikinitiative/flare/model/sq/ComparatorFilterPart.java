@@ -1,10 +1,13 @@
 package de.medizininformatikinitiative.flare.model.sq;
 
 import de.medizininformatikinitiative.flare.model.mapping.FilterMapping;
-import de.medizininformatikinitiative.flare.model.sq.expanded.*;
+import de.medizininformatikinitiative.flare.model.sq.expanded.AgeUtils;
+import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedComparatorFilter;
+import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedFilter;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -40,13 +43,11 @@ public record ComparatorFilterPart(Comparator comparator, BigDecimal value, Term
     }
 
     @Override
-    public Mono<List<ExpandedFilter>> expand(FilterMapping filterMapping) {
+    public Mono<List<ExpandedFilter>> expand(Clock clock, FilterMapping filterMapping) {
         if (filterMapping.isAge()) {
-            return comparator.equals(Comparator.EQUAL) ? Mono.just(List.of(new ExpandedDateRangeFilter(
-                    AgeUtils.searchParam, AgeUtils.equalCaseLowerDate(value, unit),
-                    AgeUtils.equalCaseLowerDate(value, unit), unit))) :
-                    Mono.just(List.of(new ExpandedDateComparatorFilter(AgeUtils.searchParam, comparator,
-                                                                       AgeUtils.ageValueToDate(value, unit), unit)));
+            return unit == null
+                    ? Mono.error(new CalculationException("Missing unit in age calculation"))
+                    : AgeUtils.expandedAgeFilterFromComparator(comparator, value, unit, clock);
         }
         return Mono.just(List.of(new ExpandedComparatorFilter(filterMapping.searchParameter(), comparator, value, unit)));
     }

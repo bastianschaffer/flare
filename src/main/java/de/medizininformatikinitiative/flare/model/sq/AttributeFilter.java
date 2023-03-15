@@ -6,6 +6,7 @@ import de.medizininformatikinitiative.flare.model.mapping.Mapping;
 import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedFilter;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
 import java.util.List;
 
 import static java.util.Objects.requireNonNull;
@@ -38,7 +39,7 @@ public record AttributeFilter(TermCode code, FilterPart filterPart) implements F
         return new AttributeFilter(code, FilterPart.fromJsonNode(node));
     }
 
-    public Mono<List<ExpandedFilter>> expand(Mapping mapping) {
-        return mapping.findAttributeMapping(code).flatMap(filterPart::expand);
+    public Mono<List<ExpandedFilter>> expand(Clock clock, Mapping mapping) {
+        return mapping.findAttributeMapping(code).flatMap(filterMapping -> filterPart.expand(clock, filterMapping));
     }
 }

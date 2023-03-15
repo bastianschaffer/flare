@@ -12,6 +12,7 @@ import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedCriterion;
 import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedFilter;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -57,6 +58,16 @@ public record Criterion(Concept concept, List<Filter> filters, TimeRestriction t
         return new Criterion(concept, filters, timeRestriction);
     }
 
+    private static ExpandedCriterion expandedCriterion(Mapping mapping, TermCode termCode) {
+        return ExpandedCriterion.of(mapping.resourceType(), mapping.termCodeSearchParameter(), termCode);
+    }
+
+    private static ExpandedCriterion expandedCriterion(Mapping mapping, TermCode termCode,
+                                                       List<ExpandedFilter> filters) {
+        return new ExpandedCriterion(mapping.resourceType(), mapping.termCodeSearchParameter(),
+                mapping.termCodeSearchParameter() == null ? null : termCode, filters);
+    }
+
     Criterion appendAttributeFilter(AttributeFilter attributeFilter) {
         var filters = new LinkedList<>(this.filters);
         filters.add(attributeFilter);
@@ -78,7 +89,7 @@ public record Criterion(Concept concept, List<Filter> filters, TimeRestriction t
 
     private Mono<List<ExpandedCriterion>> expandTermCode(MappingContext mappingContext, TermCode termCode) {
         return mappingContext.findMapping(termCode)
-                .flatMap(mapping -> expandFilters(mapping)
+                .flatMap(mapping -> expandFilters(mappingContext.clock(), mapping)
                         .map(Util::cartesianProduct)
                         .map(expandedFilterMatrix -> expandedFilterMatrix.isEmpty()
                                 ? List.of(expandedCriterion(mapping, termCode))
@@ -87,22 +98,13 @@ public record Criterion(Concept concept, List<Filter> filters, TimeRestriction t
                                 .toList()));
     }
 
-    private Mono<List<List<ExpandedFilter>>> expandFilters(Mapping mapping) {
+    private Mono<List<List<ExpandedFilter>>> expandFilters(Clock clock, Mapping mapping) {
         return filters.stream()
-                .map(filter -> filter.expand(mapping))
+                .map(filter -> filter.expand(clock, mapping))
                 .reduce(Mono.just(fixedCriterionFilters(mapping)), Util::add, Util::concat);
     }
 
     private List<List<ExpandedFilter>> fixedCriterionFilters(Mapping mapping) {
         return mapping.fixedCriteria().stream().map(FixedCriterion::expand).toList();
-    }
-
-    private static ExpandedCriterion expandedCriterion(Mapping mapping, TermCode termCode) {
-        return ExpandedCriterion.of(mapping.resourceType(), mapping.termCodeSearchParameter(), termCode);
-    }
-
-    private static ExpandedCriterion expandedCriterion(Mapping mapping, TermCode termCode,
-                                                       List<ExpandedFilter> filters) {
-        return new ExpandedCriterion(mapping.resourceType(), mapping.termCodeSearchParameter(), termCode, filters);
     }
 }

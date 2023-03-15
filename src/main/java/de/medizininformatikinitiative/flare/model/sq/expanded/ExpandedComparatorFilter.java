@@ -6,8 +6,16 @@ import de.medizininformatikinitiative.flare.model.sq.TermCode;
 
 import java.math.BigDecimal;
 
+import static java.util.Objects.requireNonNull;
+
 public record ExpandedComparatorFilter(String searchParameter, Comparator comparator, BigDecimal value, TermCode unit)
         implements ExpandedFilter {
+
+    public ExpandedComparatorFilter {
+        requireNonNull(searchParameter);
+        requireNonNull(comparator);
+        requireNonNull(value);
+    }
 
     @Override
     public QueryParams toParams() {

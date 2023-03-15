@@ -6,6 +6,7 @@ import de.medizininformatikinitiative.flare.model.mapping.FilterMapping;
 import de.medizininformatikinitiative.flare.model.sq.expanded.ExpandedFilter;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
@@ -29,7 +30,7 @@ public interface FilterPart {
                     throw new IllegalArgumentException("empty selectedConcepts");
                 } else {
                     yield new ConceptFilterPart(StreamSupport.stream(selectedConcepts.spliterator(), false)
-                                                        .map(TermCode::fromJsonNode).toList());
+                            .map(TermCode::fromJsonNode).toList());
                 }
             }
             case "quantity-comparator" -> {
@@ -61,5 +62,5 @@ public interface FilterPart {
         return new TermCode(system, unit.get("code").asText(), unit.get("display").asText());
     }
 
-    Mono<List<ExpandedFilter>> expand(FilterMapping filterMapping);
+    Mono<List<ExpandedFilter>> expand(Clock clock, FilterMapping filterMapping);
 }

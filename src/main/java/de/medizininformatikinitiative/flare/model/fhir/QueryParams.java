@@ -9,6 +9,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static java.util.Objects.requireNonNull;
+
 /**
  * An immutable list of query params.
  * <p>
@@ -28,7 +30,7 @@ public record QueryParams(List<Param> params) {
     }
 
     public static QueryParams of(String name, TermCode termCode) {
-        return EMPTY.appendParam(name, termCode);
+        return EMPTY.appendParam(requireNonNull(name), requireNonNull(termCode));
     }
 
     /**
@@ -68,7 +70,7 @@ public record QueryParams(List<Param> params) {
      * @return the {@code QueryParams} resulting in appending the param
      */
     public QueryParams appendParam(String name, Comparator comparator, BigDecimal value, TermCode unit) {
-        String unitAttachment = unit == null ? "" :  "|" + unit.system() + "|" + unit.code();
+        String unitAttachment = unit == null ? "" : "|" + unit.system() + "|" + unit.code();
         return appendParam(name, comparator.toString() + value + unitAttachment);
     }
 
@@ -78,12 +80,10 @@ public record QueryParams(List<Param> params) {
      * @param name       the name of the query parameter
      * @param comparator the {@link Comparator} to use as prefix
      * @param value      the date that should be compared
-     * @param unit       the unit of the {@code value}
      * @return the {@code QueryParams} resulting in appending the param
      */
-    public QueryParams appendParam(String name, Comparator comparator, LocalDate value, TermCode unit) {
-        return appendParam(name, comparator.toString() + value.toString() + "|" + unit.system() + "|" + unit.code());
-        //TODO maybe make function for unit attachment as it is used twice
+    public QueryParams appendParam(String name, Comparator comparator, LocalDate value) {
+        return appendParam(name, comparator.toString() + value.toString());
     }
 
     /**

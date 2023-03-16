@@ -8,6 +8,8 @@ import de.medizininformatikinitiative.flare.model.mapping.TermCodeNode;
 import de.medizininformatikinitiative.flare.model.sq.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,9 +31,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Clock;
-import java.time.Instant;
-import java.util.*;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.function.Function.identity;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,12 +46,11 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @SpringBootTest
 class StructuredQueryServiceIT {
 
+    public static final Clock CLOCK_2000 = Clock.fixed(LocalDate.of(2000, 1, 1).atStartOfDay().toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
     private static final TermCode I08 = TermCode.of("http://fhir.de/CodeSystem/bfarm/icd-10-gm", "I08", "");
     private static final TermCode COVID = TermCode.of("http://loinc.org", "94500-6", "");
     private static final TermCode INVALID = TermCode.of("http://loinc.org", "LA15841-2", "Invalid");
-
     private static final Logger logger = LoggerFactory.getLogger(StructuredQueryServiceIT.class);
-
     @Container
     @SuppressWarnings("resource")
     private static final GenericContainer<?> blaze = new GenericContainer<>("samply/blaze:0.20")
@@ -71,6 +75,17 @@ class StructuredQueryServiceIT {
 
     private static Path resourcePath(String name) throws URISyntaxException {
         return Paths.get(Objects.requireNonNull(FlareApplication.class.getResource(name)).toURI());
+    }
+
+    public static Stream<StructuredQuery> getTestQueriesReturningOnePatient() throws URISyntaxException {
+        return Arrays.stream(Objects.requireNonNull(new File(resourcePath("testCases").resolve("returningOnePatient").toString()).listFiles())).map(s ->
+        {
+            try {
+                return new ObjectMapper().readValue(Files.readString(s.toPath()), StructuredQuery.class);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @BeforeEach
@@ -105,31 +120,22 @@ class StructuredQueryServiceIT {
     }
 
     @Test
-    void json_test() throws URISyntaxException, IOException {
+    void execute_genderTestCase() throws URISyntaxException, IOException {
+        var query = new ObjectMapper().readValue(Files.readString(resourcePath("testCases").resolve("returningOther")
+                .resolve("2-gender.json")), StructuredQuery.class);
 
-        List<String> notFoundList = new LinkedList<>();
-        for (File file : Objects.requireNonNull(new File(resourcePath("testCases").toString()).listFiles())) {
-            var query = new ObjectMapper().readValue(Files.readString(file.toPath()), StructuredQuery.class);
-            try {
-                var result = service.execute(query).block();
+        var result = service.execute(query).block();
 
+        assertThat(result).isEqualTo(172);
+    }
 
-                if (result != 1) {
-                    notFoundList.add(file.getPath());
-                    System.out.println(service.translate(query).block());
-                }
-                assertThat(result).isOne();
-            } catch (Exception e) {
-                System.out.println(file.getPath());
-                e.printStackTrace();
-            }
+    @ParameterizedTest
+    @MethodSource("getTestQueriesReturningOnePatient")
+    void execute_casesReturningOne(StructuredQuery query) {
+        var result = service.execute(query).block();
 
+        assertThat(result).isOne();
 
-        }
-        System.out.println("finished");
-        for (String q : notFoundList) {
-            System.out.println("not one: " + q);
-        }
     }
 
     @Configuration
@@ -151,7 +157,7 @@ class StructuredQueryServiceIT {
             var mappings = Arrays.stream(mapper.readValue(new File("ontology/codex-term-code-mapping.json"), Mapping[].class))
                     .collect(Collectors.toMap(Mapping::key, identity()));
             var conceptTree = mapper.readValue(new File("ontology/codex-code-tree.json"), TermCodeNode.class);
-            return MappingContext.of(mappings, conceptTree, Clock.fixed(Instant.EPOCH, t));
+            return MappingContext.of(mappings, conceptTree, CLOCK_2000);
         }
 
         @Bean

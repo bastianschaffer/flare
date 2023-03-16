@@ -28,8 +28,9 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Objects;
+import java.time.Clock;
+import java.time.Instant;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.function.Function.identity;
@@ -54,52 +55,23 @@ class StructuredQueryServiceIT {
             .withExposedPorts(8080)
             .waitingFor(Wait.forHttp("/health").forStatusCode(200))
             .withLogConsumer(new Slf4jLogConsumer(logger));
+    private static boolean dataImported = false;
+    @Autowired
+    private WebClient dataStoreClient;
+    @Autowired
+    private StructuredQueryService service;
 
-    @Configuration
-    static class Config {
-
-        @Bean
-        public WebClient dataStoreClient() {
-            var host = "%s:%d".formatted(blaze.getHost(), blaze.getFirstMappedPort());
-            return WebClient.builder()
-                    .baseUrl("http://%s/fhir".formatted(host))
-                    .defaultHeader("Accept", "application/fhir+json")
-                    .defaultHeader("X-Forwarded-Host", host)
-                    .build();
-        }
-
-        @Bean
-        public MappingContext mappingContext() throws Exception {
-            var mapper = new ObjectMapper();
-            var mappings = Arrays.stream(mapper.readValue(new File("ontology/codex-term-code-mapping.json"), Mapping[].class))
-                    .collect(Collectors.toMap(Mapping::key, identity()));
-            var conceptTree = mapper.readValue(new File("ontology/codex-code-tree.json"), TermCodeNode.class);
-            return MappingContext.of(mappings, conceptTree);
-        }
-
-        @Bean
-        public FhirQueryService fhirQueryService(WebClient dataStoreClient) {
-            return new DataStore(dataStoreClient, 1);
-        }
-
-        @Bean
-        public Translator translator(MappingContext mappingContext) {
-            return new Translator(mappingContext);
-        }
-
-        @Bean
-        public StructuredQueryService service(FhirQueryService fhirQueryService, Translator translator) {
-            return new StructuredQueryService(fhirQueryService, translator);
+    private static String slurp(String name) {
+        try {
+            return Files.readString(resourcePath(name));
+        } catch (IOException | URISyntaxException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    private static boolean dataImported = false;
-
-    @Autowired
-    private WebClient dataStoreClient;
-
-    @Autowired
-    private StructuredQueryService service;
+    private static Path resourcePath(String name) throws URISyntaxException {
+        return Paths.get(Objects.requireNonNull(FlareApplication.class.getResource(name)).toURI());
+    }
 
     @BeforeEach
     void setUp() {
@@ -132,15 +104,69 @@ class StructuredQueryServiceIT {
         assertThat(result).isOne();
     }
 
-    private static String slurp(String name) {
-        try {
-            return Files.readString(resourcePath(name));
-        } catch (IOException | URISyntaxException e) {
-            throw new RuntimeException(e);
+    @Test
+    void json_test() throws URISyntaxException, IOException {
+
+        List<String> notFoundList = new LinkedList<>();
+        for (File file : Objects.requireNonNull(new File(resourcePath("testCases").toString()).listFiles())) {
+            var query = new ObjectMapper().readValue(Files.readString(file.toPath()), StructuredQuery.class);
+            try {
+                var result = service.execute(query).block();
+
+
+                if (result != 1) {
+                    notFoundList.add(file.getPath());
+                    System.out.println(service.translate(query).block());
+                }
+                assertThat(result).isOne();
+            } catch (Exception e) {
+                System.out.println(file.getPath());
+                e.printStackTrace();
+            }
+
+
+        }
+        System.out.println("finished");
+        for (String q : notFoundList) {
+            System.out.println("not one: " + q);
         }
     }
 
-    private static Path resourcePath(String name) throws URISyntaxException {
-        return Paths.get(Objects.requireNonNull(FlareApplication.class.getResource(name)).toURI());
+    @Configuration
+    static class Config {
+
+        @Bean
+        public WebClient dataStoreClient() {
+            var host = "%s:%d".formatted(blaze.getHost(), blaze.getFirstMappedPort());
+            return WebClient.builder()
+                    .baseUrl("http://%s/fhir".formatted(host))
+                    .defaultHeader("Accept", "application/fhir+json")
+                    .defaultHeader("X-Forwarded-Host", host)
+                    .build();
+        }
+
+        @Bean
+        public MappingContext mappingContext() throws Exception {
+            var mapper = new ObjectMapper();
+            var mappings = Arrays.stream(mapper.readValue(new File("ontology/codex-term-code-mapping.json"), Mapping[].class))
+                    .collect(Collectors.toMap(Mapping::key, identity()));
+            var conceptTree = mapper.readValue(new File("ontology/codex-code-tree.json"), TermCodeNode.class);
+            return MappingContext.of(mappings, conceptTree, Clock.fixed(Instant.EPOCH, t));
+        }
+
+        @Bean
+        public FhirQueryService fhirQueryService(WebClient dataStoreClient) {
+            return new DataStore(dataStoreClient, 1);
+        }
+
+        @Bean
+        public Translator translator(MappingContext mappingContext) {
+            return new Translator(mappingContext);
+        }
+
+        @Bean
+        public StructuredQueryService service(FhirQueryService fhirQueryService, Translator translator) {
+            return new StructuredQueryService(fhirQueryService, translator);
+        }
     }
 }

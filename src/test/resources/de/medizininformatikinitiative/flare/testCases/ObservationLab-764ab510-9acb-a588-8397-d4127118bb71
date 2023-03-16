@@ -1,0 +1,26 @@
+{
+    "inclusionCriteria": [
+        [
+            {
+                "attributeFilters": [],
+                "termCodes": [
+                    {
+                        "code": "38518-7",
+                        "display": "",
+                        "system": "http://loinc.org"
+                    }
+                ],
+                "valueFilter": {
+                    "comparator": "eq",
+                    "type": "quantity-comparator",
+                    "unit": {
+                        "code": "%",
+                        "display": "%"
+                    },
+                    "value": -69.0
+                }
+            }
+        ]
+    ],
+    "version": "http://to_be_decided.com/draft-1/schema#"
+}

@@ -1,0 +1,26 @@
+{
+    "inclusionCriteria": [
+        [
+            {
+                "attributeFilters": [],
+                "termCodes": [
+                    {
+                        "code": "5185-4",
+                        "display": "",
+                        "system": "http://loinc.org"
+                    }
+                ],
+                "valueFilter": {
+                    "comparator": "eq",
+                    "type": "quantity-comparator",
+                    "unit": {
+                        "code": "{Index_val}",
+                        "display": "{Index_val}"
+                    },
+                    "value": -85.0
+                }
+            }
+        ]
+    ],
+    "version": "http://to_be_decided.com/draft-1/schema#"
+}

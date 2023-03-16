@@ -1,0 +1,17 @@
+{
+    "inclusionCriteria": [
+        [
+            {
+                "attributeFilters": [],
+                "termCodes": [
+                    {
+                        "code": "P01CA",
+                        "display": "",
+                        "system": "http://fhir.de/CodeSystem/bfarm/atc"
+                    }
+                ]
+            }
+        ]
+    ],
+    "version": "http://to_be_decided.com/draft-1/schema#"
+}

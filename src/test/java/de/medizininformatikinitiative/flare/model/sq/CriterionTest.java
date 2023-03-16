@@ -275,7 +275,7 @@ class CriterionTest {
     void toQuery_Age_ComparatorEqual() {
         when(mappingContext.expandConcept(Concept.of(AGE))).thenReturn(Mono.just(List.of(AGE)));
         when(mappingContext.findMapping(AGE)).thenReturn(Mono.just(Mapping.of(AGE, "Patient")
-                .withValueFilterMapping(CODING, "birthDate")));
+                .withValueFilterMapping(CODING, "birthdate")));
         when(mappingContext.today()).thenReturn(YEAR_2000);
 
         var criterion = Criterion.of(Concept.of(AGE), ValueFilter.ofComparator(EQUAL, AGE_OF_5, YEAR_UNIT))
@@ -283,14 +283,14 @@ class CriterionTest {
 
         assertThat(criterion).containsExactly(
                 ExpandedCriterion.of("Patient")
-                        .appendFilter(new ExpandedDateRangeFilter("birthDate", YEAR_1994.plusDays(1), YEAR_1995)));
+                        .appendFilter(new ExpandedDateRangeFilter("birthdate", YEAR_1994.plusDays(1), YEAR_1995)));
     }
 
     @Test
     void toQuery_Age_ComparatorOther() {
         when(mappingContext.expandConcept(Concept.of(AGE))).thenReturn(Mono.just(List.of(AGE)));
         when(mappingContext.findMapping(AGE)).thenReturn(Mono.just(Mapping.of(AGE, "Patient")
-                .withValueFilterMapping(CODING, "birthDate")));
+                .withValueFilterMapping(CODING, "birthdate")));
         when(mappingContext.today()).thenReturn(YEAR_2000);
 
         var criterion = Criterion.of(Concept.of(AGE), ValueFilter.ofComparator(GREATER_THAN, AGE_OF_5,
@@ -298,14 +298,14 @@ class CriterionTest {
 
         assertThat(criterion).containsExactly(
                 ExpandedCriterion.of("Patient")
-                        .appendFilter(new ExpandedDateComparatorFilter("birthDate", LESS_THAN, YEAR_1995)));
+                        .appendFilter(new ExpandedDateComparatorFilter("birthdate", LESS_THAN, YEAR_1995)));
     }
 
     @Test
     void toQuery_Age_Comparator_UnknownUnit() {
         when(mappingContext.expandConcept(Concept.of(AGE))).thenReturn(Mono.just(List.of(AGE)));
         when(mappingContext.findMapping(AGE)).thenReturn(Mono.just(Mapping.of(AGE, "Patient")
-                .withValueFilterMapping(CODING, "birthDate")));
+                .withValueFilterMapping(CODING, "birthdate")));
         when(mappingContext.today()).thenReturn(YEAR_2000);
 
         var criterion = Criterion.of(Concept.of(AGE), ValueFilter.ofComparator(GREATER_THAN, AGE_OF_5,
@@ -318,7 +318,7 @@ class CriterionTest {
     void toQuery_Age_Comparator_WithoutUnit() {
         when(mappingContext.expandConcept(Concept.of(AGE))).thenReturn(Mono.just(List.of(AGE)));
         when(mappingContext.findMapping(AGE)).thenReturn(Mono.just(Mapping.of(AGE, "Patient")
-                .withValueFilterMapping(CODING, "birthDate")));
+                .withValueFilterMapping(CODING, "birthdate")));
 
         var criterion = Criterion.of(Concept.of(AGE), ValueFilter.ofComparator(GREATER_THAN, AGE_OF_5))
                 .expand(mappingContext);
@@ -330,7 +330,7 @@ class CriterionTest {
     void toQuery_AgeRange() {
         when(mappingContext.expandConcept(Concept.of(AGE))).thenReturn(Mono.just(List.of(AGE)));
         when(mappingContext.findMapping(AGE)).thenReturn(Mono.just(Mapping.of(AGE, "Patient")
-                .withValueFilterMapping(CODING, "birthDate")));
+                .withValueFilterMapping(CODING, "birthdate")));
         when(mappingContext.today()).thenReturn(YEAR_2000);
 
         var criterion = Criterion.of(Concept.of(AGE), ValueFilter.ofRange(AGE_OF_5, AGE_OF_10, YEAR_UNIT))
@@ -338,7 +338,7 @@ class CriterionTest {
 
         assertThat(criterion).containsExactly(
                 ExpandedCriterion.of("Patient")
-                        .appendFilter(new ExpandedDateRangeFilter("birthDate", YEAR_1990, YEAR_1995)));
+                        .appendFilter(new ExpandedDateRangeFilter("birthdate", YEAR_1990, YEAR_1995)));
     }
 
     @Test

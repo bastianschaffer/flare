@@ -1,0 +1,17 @@
+{
+    "inclusionCriteria": [
+        [
+            {
+                "attributeFilters": [],
+                "termCodes": [
+                    {
+                        "code": "S14.11",
+                        "display": "",
+                        "system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm"
+                    }
+                ]
+            }
+        ]
+    ],
+    "version": "http://to_be_decided.com/draft-1/schema#"
+}

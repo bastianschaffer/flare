@@ -1,0 +1,26 @@
+{
+    "inclusionCriteria": [
+        [
+            {
+                "attributeFilters": [],
+                "termCodes": [
+                    {
+                        "code": "19212-0",
+                        "display": "",
+                        "system": "http://loinc.org"
+                    }
+                ],
+                "valueFilter": {
+                    "comparator": "eq",
+                    "type": "quantity-comparator",
+                    "unit": {
+                        "code": "mm[Hg]",
+                        "display": "mm[Hg]"
+                    },
+                    "value": 42.0
+                }
+            }
+        ]
+    ],
+    "version": "http://to_be_decided.com/draft-1/schema#"
+}
